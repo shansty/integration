@@ -1,5 +1,3 @@
-mock-brivo/
-
 node_modules/
 dist/
 .env
