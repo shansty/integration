@@ -10,17 +10,14 @@ import rootRouter from './routers/rootRouter';
 dotenv.config();
 const app = express();
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(express.json({ type: ['application/json', 'application/scim+json'] }));
 app.use(morgan('dev'));
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
-// Okta typically sends Basic or OAuth Bearer to the SCIM server
 app.use('/scim/v2', getAPIToken);
 app.use('/scim/v2', rootRouter);
 
 // app.use(errorHandler);
-
 
 app.listen(process.env.PORT, () => {
   console.log(`SCIM adapter running at ${process.env.SCIM_API_URL}`);

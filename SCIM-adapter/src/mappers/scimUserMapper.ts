@@ -1,5 +1,12 @@
 import type { User } from '@prisma/client';
 
+type SupportedFilterAttr = 'userName' | 'externalId';
+
+interface ParsedFilter {
+  attribute: SupportedFilterAttr;
+  value: string;
+}
+
 // Prisma → SCIM
 export function toScimUser(user: User) {
   return {
@@ -18,12 +25,13 @@ export function toScimUser(user: User) {
 
 // SCIM → Prisma
 export function fromScimUser(payload: any) {
+  console.dir("payload from fromScimUser", payload)
   return {
-    userName: payload.userName,
-    externalId: payload.externalId,
-    active: payload.active ?? true,
-    givenName: payload.name?.givenName,
-    familyName: payload.name?.familyName,
+    userName: payload?.userName,
+    externalId: payload?.externalId,
+    active: payload?.active ?? true,
+    givenName: payload?.name?.givenName,
+    familyName: payload?.name?.familyName,
   };
 }
 
@@ -46,4 +54,23 @@ export function fromBrivoPerson(person: any) {
     active: person.status === 'active',
     brivoId: String(person.id),
   };
+}
+
+export function parseEqFilter(filterString?: string): ParsedFilter | null {
+  if (!filterString) return null;
+  const match = filterString.match(/^\s*([\w.]+)\s+eq\s+"([^"]+)"\s*$/i);
+  if (!match) return null;
+
+  const attributeName = match[1].toLowerCase();
+  const attributeValue = match[2];
+
+  if (attributeName === 'username') {
+    return { attribute: 'userName', value: attributeValue };
+  }
+
+  if (attributeName === 'externalid') {
+    return { attribute: 'externalId', value: attributeValue };
+  }
+
+  return null; 
 }

@@ -8,25 +8,23 @@ import rootRouter from './routers/rootRouter';
 
 dotenv.config();
 const app = express();
-const api = jsonServer.create();
-const router = jsonServer.router('db.json');
+const brivoApi = jsonServer.create();
+const brivoRouter = jsonServer.router('db.json'); 
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-api.use(bodyParser.json());
-api.use(bodyParser.urlencoded({ extended: true }));
+brivoApi.use(bodyParser.json());
+brivoApi.use(bodyParser.urlencoded({ extended: true }));
 
-
-api.use((req, res, next) => {
-  if (req.header('api-key') !== process.env.API_KEY) {
-    return res.status(401).json({ error: 'invalid_api_key' });
-  }
-  next();
-}, requireBearer);
-
-api.use(router);
-app.use('/api', api);
 app.use('/', rootRouter);
+
+brivoApi.use(requireBearer);
+brivoApi.use(jsonServer.defaults());
+brivoApi.use(brivoRouter);
+app.use('/', brivoApi);
+
+app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+
 
 app.listen(process.env.PORT, () => {
   console.log(`Mock Brivo API running at ${process.env.BRIVO_API_URL}`);

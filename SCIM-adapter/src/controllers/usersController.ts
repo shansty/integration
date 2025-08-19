@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { brivo } from '../brivo/client';
-import { toScimUser, fromScimUser, toBrivoPerson, fromBrivoPerson } from '../mappers/scimUserMapper';
+import { toScimUser, fromScimUser, toBrivoPerson, fromBrivoPerson, parseEqFilter } from '../mappers/scimUserMapper';
+import { connect } from 'http2';
+import { configDotenv } from 'dotenv';
 
 function scimError(res: Response, detail: string, status = 400) {
   return res.status(status).json({
@@ -13,16 +15,52 @@ function scimError(res: Response, detail: string, status = 400) {
 
 export async function listUsers(req: Request, res: Response) {
   try {
+    const filterString = req.query.filter as string | undefined;
+    const parsedFilter = parseEqFilter(filterString);
+
+    if (parsedFilter) {
+      let user = null;
+      if (parsedFilter.attribute === 'userName') {
+        user = await prisma.user.findUnique({
+          where: { userName: parsedFilter.value },
+        });
+      } else if (parsedFilter.attribute === 'externalId') {
+        user = await prisma.user.findFirst({
+          where: { externalId: parsedFilter.value },
+        });
+      }
+      if (!user) {
+        return res.json({
+          schemas: ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
+          totalResults: 0,
+          startIndex: 1,
+          itemsPerPage: 0,
+          Resources: [],
+        });
+      }
+      return res.json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
+        totalResults: 1,
+        startIndex: 1,
+        itemsPerPage: 1,
+        Resources: [toScimUser(user)],
+      });
+    }
+
     const startIndex = Number(req.query.startIndex ?? 1);
-    const brivoPeople = await brivo.listPeople(req);
-    const prismaUsers = await Promise.all(brivoPeople.map(syncBrivoPerson));
+    const count = Number(req.query.count ?? 100);
+
+    const users = await prisma.user.findMany({
+      skip: startIndex - 1,
+      take: count,
+    });
 
     return res.json({
       schemas: ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
-      totalResults: prismaUsers.length,
+      totalResults: users.length,
       startIndex,
-      itemsPerPage: prismaUsers.length,
-      Resources: prismaUsers.map(toScimUser),
+      itemsPerPage: users.length,
+      Resources: users.map(toScimUser),
     });
   } catch (err) {
     console.error('listUsers error', err);
@@ -30,25 +68,73 @@ export async function listUsers(req: Request, res: Response) {
   }
 }
 
+// export async function getUserById(req: Request, res: Response) {
+//   try {
+  
+//     const brivoPerson = await brivo.getPerson(req, req.params.id);
+//     if (!brivoPerson) return scimError(res, 'User not found', 404);
+
+//     const dbUser = await syncBrivoPerson(brivoPerson);
+//     return res.json(toScimUser(dbUser));
+//   } catch (e) {
+//     console.error('getUserById error', e);
+//     return scimError(res, 'Failed to fetch user', 500);
+//   }
+// }
+
 export async function getUserById(req: Request, res: Response) {
   try {
-    const brivoPerson = await brivo.getPerson(req, req.params.id);
-    if (!brivoPerson) return scimError(res, 'User not found', 404);
+    const scimId = req.params.id;
 
-    const dbUser = await syncBrivoPerson(brivoPerson);
-    return res.json(toScimUser(dbUser));
+    // 1) Find locally by SCIM id
+    const existing = await prisma.user.findUnique({ where: { id: scimId } });
+    if (!existing) {
+      return res.status(404).json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+        detail: 'User not found',
+        status: '404',
+      });
+    }
+
+    // 2) (Optional) refresh from Brivo if we have a brivoId
+    if (existing.brivoId) {
+      try {
+        const person = await brivo.getPerson(req, existing.brivoId); // <-- use brivoId here
+        await prisma.user.update({
+          where: { id: scimId },
+          data: {
+            userName: person.email,
+            givenName: person.firstName ?? null,
+            familyName: person.lastName ?? null,
+            active: person.status === 'active',
+          },
+        });
+      } catch (e) {
+        // Brivo may not have it — ignore sync failure and still return local
+        console.warn('Brivo sync skipped for', existing.brivoId);
+      }
+    }
+
+    const fresh = await prisma.user.findUnique({ where: { id: scimId } });
+    return res.json(toScimUser(fresh!));
   } catch (e) {
     console.error('getUserById error', e);
-    return scimError(res, 'Failed to fetch user', 500);
+    return res.status(500).json({
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+      detail: 'Failed to fetch user',
+      status: '500',
+    });
   }
 }
 
+
 export async function createUser(req: Request, res: Response) {
   try {
+    console.dir("req.body", req.body)
     const scimUser = fromScimUser(req.body);
     const brivoPerson = await brivo.createPerson(req, toBrivoPerson(scimUser));
     const brivoId: string = String(brivoPerson.id ?? brivoPerson.brivoId ?? brivoPerson.personId ?? '');
-
+    
     const dbUser = await prisma.user.create({
       data: {
         userName: scimUser.userName,
@@ -59,7 +145,6 @@ export async function createUser(req: Request, res: Response) {
         brivoId: brivoId || null,
       },
     });
-
     return res.status(201).json(toScimUser(dbUser));
   } catch (e: any) {
     console.error('createUser error', e?.response?.data || e);
@@ -71,9 +156,11 @@ export async function patchUser(req: Request, res: Response) {
   try {
     const id = req.params.id;
     const existing = await prisma.user.findUnique({ where: { id } });
+    console.log(existing)
     if (!existing) return scimError(res, 'User not found', 404);
 
     let partial: any = {};
+    console.dir("body", req.body)
     if (Array.isArray(req.body?.Operations)) {
       for (const op of req.body.Operations) {
         const path = String(op.path || '').toLowerCase();
@@ -101,7 +188,7 @@ export async function patchUser(req: Request, res: Response) {
         active: partial.active ?? existing.active,
       }));
     }
-
+    console.log(partial)
     const dbUser = await prisma.user.update({
       where: { id },
       data: partial,

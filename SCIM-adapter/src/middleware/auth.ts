@@ -5,13 +5,14 @@ import prisma from '../prisma';
 function extractToken(auth: string): string | null {
   if (!auth) return null;
   if (auth.startsWith('Bearer ')) return auth.slice(7).trim();
-  if (auth.startsWith('SSWS ')) return auth.slice(5).trim(); // Okta header style
+  if (auth.startsWith('SSWS ')) return auth.slice(5).trim(); 
+  if(auth === process.env.API_TOKEN_INTEGRATION) return auth
   return null;
 }
 
 export async function getAPIToken(req: Request, res: Response, next: NextFunction) {
   try {
-    const configuredToken = process.env.API_TOKEN;
+    const configuredToken = process.env.API_TOKEN_INTEGRATION;
     if (!configuredToken) {
       return res.status(500).json({
         schemas: ["urn:ietf:params:scim:api:messages:2.0:Error"],
@@ -21,7 +22,9 @@ export async function getAPIToken(req: Request, res: Response, next: NextFunctio
     }
 
     const auth = req.headers.authorization || '';
+    console.dir(auth)
     const token = extractToken(auth);
+    console.log(token)
     if (!token) {
       return res.status(401).json({
         schemas: ["urn:ietf:params:scim:api:messages:2.0:Error"],
