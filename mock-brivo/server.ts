@@ -29,5 +29,5 @@ app.use('/api', api);
 app.use('/', rootRouter);
 
 app.listen(process.env.PORT, () => {
-  console.log(`Mock Brivo API running at http://localhost:${process.env.PORT}`);
+  console.log(`Mock Brivo API running at ${process.env.BRIVO_API_URL}`);
 });

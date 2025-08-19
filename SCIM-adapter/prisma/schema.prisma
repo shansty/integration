@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  userName     String   @unique               // typically email
+  active       Boolean  @default(true)
+  givenName    String?
+  familyName   String?
+  externalId   String?                         // SCIM externalId (Okta)
+  brivoId      String?   @unique                // ID in Brivo
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  memberships  GroupMember[]
+}
+
+model Group {
+  id           String   @id @default(cuid())
+  displayName  String   @unique
+  externalId   String?
+  brivoId      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  members      GroupMember[]
+}
+
+model GroupMember {
+  userId   String
+  groupId  String
+  user     User   @relation(fields: [userId], references: [id])
+  group    Group  @relation(fields: [groupId], references: [id])
+  @@id([userId, groupId])
+}
+
+model ApiClient {
+  id           String   @id @default(cuid())     
+  clientId     String   @unique                  
+  tokenHash    String   @unique 
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  expiresAt    DateTime?
+}
