@@ -61,7 +61,7 @@
     {
       "id": 101,
       "displayName": "HQ Employees",
-      "members": [
+      "users": [
         1,
         3
       ]
@@ -69,7 +69,7 @@
     {
       "id": 102,
       "displayName": "Contractors",
-      "members": [
+      "users": [
         2
       ]
     },
