@@ -183,16 +183,20 @@ export async function patchUser(req: Request, res: Response) {
       }
     } else {
       // Plain partial body (e.g., { "active": false })
-      const incoming = fromScimUser(req.body);
-      partial.userName = incoming.userName;
-      // coerce active here too
+      if ('userName' in req.body) {
+        partial.userName = req.body.userName;
+      }
       if ('active' in req.body) {
         partial.active = toBoolean(req.body.active);
-      } else if (typeof incoming.active === 'boolean') {
-        partial.active = incoming.active;
       }
-      partial.givenName = incoming.givenName;
-      partial.familyName = incoming.familyName;
+      if (req.body.name && typeof req.body.name === 'object') {
+        if ('givenName' in req.body.name) {
+          partial.givenName = req.body.name.givenName;
+        }
+        if ('familyName' in req.body.name) {
+          partial.familyName = req.body.name.familyName;
+        }
+      }
     }
 
     // Sync external system (keep your logic)
