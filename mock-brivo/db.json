@@ -22,36 +22,11 @@
       "status": "active"
     },
     {
+      "email": "test3@gmail.com",
+      "firstName": "test",
+      "lastName": "test",
       "status": "active",
       "id": 4
-    },
-    {
-      "email": "shirochina16@gmail.com",
-      "firstName": "me",
-      "lastName": "me",
-      "status": "active",
-      "id": 5
-    },
-    {
-      "email": "test3@gmail.com",
-      "firstName": "test3",
-      "lastName": "test3",
-      "status": "active",
-      "id": 6
-    },
-    {
-      "email": "test3@gmail.com",
-      "firstName": "test3",
-      "lastName": "test6",
-      "status": "active",
-      "id": 7
-    },
-    {
-      "email": "test3@gmail.com",
-      "firstName": "test3",
-      "lastName": "test10",
-      "status": "active",
-      "id": 8
     }
   ],
   "groups": [

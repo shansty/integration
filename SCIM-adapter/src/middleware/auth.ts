@@ -22,9 +22,7 @@ export async function getAPIToken(req: Request, res: Response, next: NextFunctio
     }
 
     const auth = req.headers.authorization || '';
-    console.dir(auth)
     const token = extractToken(auth);
-    console.log(token)
     if (!token) {
       return res.status(401).json({
         schemas: ["urn:ietf:params:scim:api:messages:2.0:Error"],

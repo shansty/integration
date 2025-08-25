@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node server.ts",
-    "seed": "node generate.ts",
+    "start": "tsx server.ts",
+    "seed": "tsx generate.ts",
     "dev": "nodemon --ext ts --watch . --exec \"tsx server.ts\""
   },
   "dependencies": {

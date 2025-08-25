@@ -25,7 +25,6 @@ export function toScimUser(user: User) {
 
 // SCIM → Prisma
 export function fromScimUser(payload: any) {
-  console.dir("payload from fromScimUser", payload)
   return {
     userName: payload?.userName,
     externalId: payload?.externalId,

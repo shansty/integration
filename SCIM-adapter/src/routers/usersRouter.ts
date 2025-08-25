@@ -6,6 +6,7 @@ import {
   createUser,
   patchUser,
   deleteUser,
+  putUser
 } from '../controllers/usersController';
 
 export const usersRouter = Router();
@@ -16,6 +17,7 @@ usersRouter.get('/', listUsers);
 usersRouter.get('/:id', getUserById);
 usersRouter.post('/', createUser);
 usersRouter.patch('/:id', patchUser);
+usersRouter.put('/:id', putUser);
 usersRouter.delete('/:id', deleteUser);
 
 export default usersRouter;
