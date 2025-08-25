@@ -22,25 +22,39 @@
       "status": "active"
     },
     {
-      "email": "test3@gmail.com",
-      "firstName": "test",
-      "lastName": "test",
+      "email": "shirochina16@gmail.com",
+      "firstName": "me",
+      "lastName": "me",
       "status": "active",
       "id": 4
+    },
+    {
+      "email": "test@gmail.com",
+      "firstName": "Test",
+      "lastName": "User",
+      "status": "active",
+      "id": 5
+    },
+    {
+      "email": "test2@gmail.com",
+      "firstName": "Test2",
+      "lastName": "User2",
+      "status": "active",
+      "id": 6
     },
     {
       "email": "test3@gmail.com",
       "firstName": "test3",
       "lastName": "test3",
       "status": "active",
-      "id": 5
+      "id": 7
     },
     {
-      "email": "test3@gmail.com",
-      "firstName": "test6",
-      "lastName": "test6",
-      "status": "inactive",
-      "id": 6
+      "email": "A.Shyrochyna@ventionteams.com",
+      "firstName": "Anastasiya",
+      "lastName": "Shyrochyna",
+      "status": "active",
+      "id": 8
     }
   ],
   "groups": [
@@ -60,12 +74,15 @@
       ]
     },
     {
-      "name": "Test",
-      "id": 103
-    },
-    {
-      "name": "AdminTest",
-      "id": 104
+      "name": "Group",
+      "id": 103,
+      "users": [
+        "4",
+        "5",
+        "6",
+        "8",
+        "7"
+      ]
     }
   ]
 }

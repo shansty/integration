@@ -1,6 +1,5 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import bodyParser from 'body-parser';
 import morgan from 'morgan';
 // import { errorHandler } from './middleware/error.js';
 import { getAPIToken } from './middleware/auth';
