@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { brivo } from '../brivo/client';
-import { toScimGroup, fromScimGroup } from '../mappers/scimGroupMapper';
+import { toScimGroup, fromScimGroup, ScimMember } from '../mappers/scimGroupMapper';
 
 function scimError(res: Response, detail: string, status = 400) {
   return res.status(status).json({
@@ -65,6 +65,13 @@ export async function createGroup(req: Request, res: Response) {
         displayName: local.displayName,
         externalId: local.externalId ?? null,
         brivoId: brivoId || null,
+        members: {
+          create: local.members.map((userId: string) => ({
+            user: {
+              connect: { id: userId },
+            },
+          })),
+        },
       },
       include: { members: true },
     });
@@ -82,23 +89,57 @@ export async function patchGroup(req: Request, res: Response) {
     const existing = await prisma.group.findUnique({ where: { id } });
     if (!existing) return scimError(res, 'Group not found', 404);
 
-    let displayName: string | undefined;
+    const data: any = {};
+    const memberUpdates = {
+      create: [] as any[],
+      deleteMany: { OR: [] as any[] }, 
+    };
+
     if (Array.isArray(req.body?.Operations)) {
       for (const op of req.body.Operations) {
         const path = String(op.path || '').toLowerCase();
-        if (path === 'displayname') displayName = op.value;
+        const opType = String(op.op || '').toLowerCase();
+
+        if (path === 'displayname') {
+          data.displayName = op.value;
+        } else if (path === 'members') {
+          const members = (Array.isArray(op.value) ? op.value : [op.value]).filter(Boolean);
+          const userIds = members.map((m: ScimMember) => m.value).filter(Boolean);
+
+          if (opType === 'add') {
+            for (const userId of userIds) {
+              memberUpdates.create.push({
+                user: { connect: { id: userId } },
+              });
+            }
+          } else if (opType === 'remove') {
+            for (const userId of userIds) {
+              memberUpdates.deleteMany.OR.push({ userId: userId });
+            }
+          }
+        }
       }
     } else if (req.body?.displayName) {
-      displayName = req.body.displayName;
+      data.displayName = req.body.displayName;
     }
 
-    if (displayName !== undefined && existing.brivoId) {
-      await brivo.updateGroup(req, existing.brivoId, { name: displayName });
+    if (data.displayName !== undefined && existing.brivoId) {
+      await brivo.updateGroup(req, existing.brivoId, { name: data.displayName });
+    }
+
+    if (memberUpdates.create.length > 0 || memberUpdates.deleteMany.OR.length > 0) {
+      data.members = {};
+      if (memberUpdates.create.length > 0) {
+        data.members.create = memberUpdates.create;
+      }
+      if (memberUpdates.deleteMany.OR.length > 0) {
+        data.members.deleteMany = memberUpdates.deleteMany;
+      }
     }
 
     const saved = await prisma.group.update({
       where: { id },
-      data: displayName !== undefined ? { displayName } : {},
+      data,
       include: { members: true },
     });
 

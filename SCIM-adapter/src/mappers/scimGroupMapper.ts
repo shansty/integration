@@ -1,5 +1,16 @@
 import type { Group, GroupMember } from '@prisma/client';
 
+export interface ScimGroupInput {
+  displayName: string;
+  externalId?: string;
+  members: string[];
+}
+
+export interface ScimMember {
+  value: string;
+  display?: string;
+}
+
 export function toScimGroup(g: Group, members: GroupMember[] = []) {
   return {
     schemas: ["urn:ietf:params:scim:schemas:core:2.0:Group"],
@@ -10,9 +21,11 @@ export function toScimGroup(g: Group, members: GroupMember[] = []) {
   };
 }
 
-export function fromScimGroup(payload: any) {
+export function fromScimGroup(payload: any): ScimGroupInput {
+  const members = (payload.members || []).map((m: any) => m.value).filter(Boolean);
   return {
     displayName: payload.displayName,
-    externalId: payload.externalId
+    externalId: payload.externalId,
+    members: members
   };
 }
