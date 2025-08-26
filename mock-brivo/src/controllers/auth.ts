@@ -32,11 +32,11 @@ export const token = (req: Request, res: Response) => {
     default:
       return res.status(400).json({ error: 'unsupported_grant_type' });
   }
-}
+};
 
 export const redirect = (req: Request, res: Response) => {
   res.json({ code: req.query.code, state: req.query.state });
-}
+};
 
 export function isAccessTokenValid(accessToken: string): boolean {
   for (const [, v] of tokens.entries()) {
@@ -52,7 +52,9 @@ function validateApiKeyAndClientAuth(req: Request, res: Response): boolean {
     return false;
   }
   const authHeader = req.headers['authorization'];
-  const basic = Buffer.from(`${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`).toString('base64');
+  const basic = Buffer.from(`${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`).toString(
+    'base64',
+  );
   if (authHeader !== `Basic ${basic}`) {
     res.status(401).json({ error: 'invalid_client' });
     return false;

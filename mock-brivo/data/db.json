@@ -1,0 +1,64 @@
+{
+  "people": [
+    {
+      "id": 1,
+      "email": "alice@example.com",
+      "firstName": "Alice",
+      "lastName": "Ng",
+      "status": "active"
+    },
+    {
+      "id": 2,
+      "email": "bob@example.com",
+      "firstName": "Bob",
+      "lastName": "Smith",
+      "status": "inactive"
+    },
+    {
+      "email": "A.Shyrochyna@ventionteams.com",
+      "firstName": "Anastasiya",
+      "lastName": "Shyrochyna",
+      "status": "inactive",
+      "id": 3
+    },
+    {
+      "email": "shirochina16@gmail.com",
+      "firstName": "me",
+      "lastName": "me",
+      "status": "active",
+      "id": 4
+    },
+    {
+      "email": "test2@gmail.com",
+      "firstName": "Test2",
+      "lastName": "User2",
+      "status": "active",
+      "id": 5
+    },
+    {
+      "email": "test@gmail.com",
+      "firstName": "Test10",
+      "lastName": "User",
+      "status": "active",
+      "id": 6
+    }
+  ],
+  "groups": [
+    {
+      "id": 101,
+      "displayName": "HQ Employees",
+      "members": [
+        1,
+        3
+      ]
+    },
+    {
+      "name": "Group",
+      "id": 102,
+      "users": [
+        "5",
+        "4"
+      ]
+    }
+  ]
+}

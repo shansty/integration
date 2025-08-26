@@ -1,7 +1,13 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { brivo } from '../brivo/client';
-import { toScimUser, fromScimUser, toBrivoPerson, fromBrivoPerson, parseEqFilter } from '../mappers/scimUserMapper';
+import {
+  toScimUser,
+  fromScimUser,
+  toBrivoPerson,
+  fromBrivoPerson,
+  parseEqFilter,
+} from '../mappers/scimUserMapper';
 import { connect } from 'http2';
 import { configDotenv } from 'dotenv';
 
@@ -74,7 +80,6 @@ export async function listUsers(req: Request, res: Response) {
   }
 }
 
-
 export async function getUserById(req: Request, res: Response) {
   try {
     const scimId = req.params.id;
@@ -117,13 +122,12 @@ export async function getUserById(req: Request, res: Response) {
   }
 }
 
-
 export async function createUser(req: Request, res: Response) {
   try {
-    console.dir("req.body", req.body)
+    console.dir('req.body', req.body);
     const scimUser = fromScimUser(req.body);
     const brivoPerson = await brivo.createPerson(req, toBrivoPerson(scimUser));
-    const brivoId: string = String(brivoPerson.id ?? brivoPerson.brivoId ?? brivoPerson.personId ?? '');
+    const brivoId = String(brivoPerson.id ?? brivoPerson.brivoId ?? brivoPerson.personId ?? '');
 
     const dbUser = await prisma.user.create({
       data: {
@@ -183,26 +187,33 @@ export async function patchUser(req: Request, res: Response) {
       }
     } else {
       // Plain partial body (e.g., { "active": false })
-      const incoming = fromScimUser(req.body);
-      partial.userName = incoming.userName;
-      // coerce active here too
+      if ('userName' in req.body) {
+        partial.userName = req.body.userName;
+      }
       if ('active' in req.body) {
         partial.active = toBoolean(req.body.active);
-      } else if (typeof incoming.active === 'boolean') {
-        partial.active = incoming.active;
       }
-      partial.givenName = incoming.givenName;
-      partial.familyName = incoming.familyName;
+      if (req.body.name && typeof req.body.name === 'object') {
+        if ('givenName' in req.body.name) {
+          partial.givenName = req.body.name.givenName;
+        }
+        if ('familyName' in req.body.name) {
+          partial.familyName = req.body.name.familyName;
+        }
+      }
     }
-
     // Sync external system (keep your logic)
     if (existing.brivoId) {
-      await brivo.updatePerson(req, existing.brivoId, toBrivoPerson({
-        userName: partial.userName ?? existing.userName,
-        givenName: partial.givenName ?? existing.givenName,
-        familyName: partial.familyName ?? existing.familyName,
-        active: (typeof partial.active === 'boolean' ? partial.active : existing.active),
-      }));
+      await brivo.updatePerson(
+        req,
+        existing.brivoId,
+        toBrivoPerson({
+          userName: partial.userName ?? existing.userName,
+          givenName: partial.givenName ?? existing.givenName,
+          familyName: partial.familyName ?? existing.familyName,
+          active: typeof partial.active === 'boolean' ? partial.active : existing.active,
+        }),
+      );
     }
 
     const updated = await prisma.user.update({
@@ -216,7 +227,6 @@ export async function patchUser(req: Request, res: Response) {
     return scimError(res, 'Failed to update user', 502);
   }
 }
-
 
 export async function putUser(req: Request, res: Response) {
   try {
@@ -238,12 +248,16 @@ export async function putUser(req: Request, res: Response) {
     });
 
     if (existing.brivoId) {
-      await brivo.updatePerson(req, existing.brivoId, toBrivoPerson({
-        userName: dbUser.userName,
-        givenName: dbUser.givenName ?? undefined,
-        familyName: dbUser.familyName ?? undefined,
-        active: dbUser.active,
-      }));
+      await brivo.updatePerson(
+        req,
+        existing.brivoId,
+        toBrivoPerson({
+          userName: dbUser.userName,
+          givenName: dbUser.givenName ?? undefined,
+          familyName: dbUser.familyName ?? undefined,
+          active: dbUser.active,
+        }),
+      );
     }
 
     res.setHeader('Location', `${baseUrl(req)}/Users/${encodeURIComponent(id)}`);
@@ -261,7 +275,11 @@ export async function deleteUser(req: Request, res: Response) {
     if (!existing) return res.status(204).send();
 
     if (existing.brivoId) {
-      try { await brivo.deletePerson(req, existing.brivoId); } catch (e) { }
+      try {
+        await brivo.deletePerson(req, existing.brivoId);
+      } catch (e) {
+        console.warn('Brivo delete skipped for', existing.brivoId);
+      }
     }
 
     await prisma.user.delete({ where: { id } });
@@ -279,4 +297,3 @@ async function syncBrivoPerson(person: any) {
     create: fromBrivoPerson(person),
   });
 }
-

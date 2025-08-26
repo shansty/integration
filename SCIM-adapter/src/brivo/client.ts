@@ -6,7 +6,6 @@ const api = axios.create({
   timeout: Number(process.env.BRIVO_TIMEOUT_MS) || 5000,
 });
 
-
 function withAuth(req: Request) {
   return {
     headers: {

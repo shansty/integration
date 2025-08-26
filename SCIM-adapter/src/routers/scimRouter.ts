@@ -1,5 +1,9 @@
 import { Router } from 'express';
-import { getResourceTypes, getSchemas, getServiceProviderConfig } from '../controllers/scimController';
+import {
+  getResourceTypes,
+  getSchemas,
+  getServiceProviderConfig,
+} from '../controllers/scimController';
 
 export const scimRouter = Router();
 

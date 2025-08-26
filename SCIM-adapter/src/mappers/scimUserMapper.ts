@@ -10,7 +10,7 @@ interface ParsedFilter {
 // Prisma → SCIM
 export function toScimUser(user: User) {
   return {
-    schemas: ["urn:ietf:params:scim:schemas:core:2.0:User"],
+    schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
     id: user.id,
     userName: user.userName,
     externalId: user.externalId ?? undefined,
@@ -71,5 +71,5 @@ export function parseEqFilter(filterString?: string): ParsedFilter | null {
     return { attribute: 'externalId', value: attributeValue };
   }
 
-  return null; 
+  return null;
 }

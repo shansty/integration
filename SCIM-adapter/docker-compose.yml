@@ -1,4 +1,4 @@
-version: "1.0"
+version: '1.0'
 services:
   db:
     image: postgres:16-alpine
@@ -8,11 +8,11 @@ services:
       POSTGRES_PASSWORD: scim
       POSTGRES_DB: scim
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U scim -d scim"]
+      test: ['CMD-SHELL', 'pg_isready -U scim -d scim']
       interval: 5s
       timeout: 3s
       retries: 10
