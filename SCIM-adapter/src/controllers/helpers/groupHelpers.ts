@@ -9,7 +9,7 @@ export function scimError(res: Response, detail: string, status = 400) {
   });
 }
 
-// Extract the SCIM User id from a $ref URL (absolute or relative). 
+// Extract the SCIM User id from a $ref URL (absolute or relative).
 export function parseUserIdFromRefUrl(refUrl: string): string | null {
   try {
     const lowered = refUrl.toLowerCase();
@@ -73,7 +73,6 @@ export function extractUserIdsFromMembersFilterPath(rawPath: string): string[] {
   }
   return Array.from(new Set(userIds));
 }
-
 
 export async function findGroupByAnyId(identifier: string) {
   // Try primary key first (recommended: your SCIM id should be this)

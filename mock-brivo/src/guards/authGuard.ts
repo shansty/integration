@@ -1,5 +1,5 @@
-import { NextFunction, Response, Request } from "express";
-import { isAccessTokenValid } from "../controllers/auth";
+import { NextFunction, Response, Request } from 'express';
+import { isAccessTokenValid } from '../controllers/auth';
 
 export function requireBearer(req: Request, res: Response, next: NextFunction) {
   const auth = (req.header('authorization') || '').trim();

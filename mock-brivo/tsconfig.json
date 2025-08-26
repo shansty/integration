@@ -5,6 +5,13 @@
     "moduleResolution": "Bundler",
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+
+    "types": ["node"],
+    "resolveJsonModule": true,
+    "moduleDetection": "force",
+
+    "noEmit": true
+  },
+  "include": ["src/**/*.ts"]
 }

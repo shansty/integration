@@ -6,7 +6,7 @@ import {
   createUser,
   patchUser,
   deleteUser,
-  putUser
+  putUser,
 } from '../controllers/usersController';
 
 export const usersRouter = Router();
